@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fuga da Zona Cyber: Saga Completa</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #07080c;
+      color: #00ff66;
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .game-container {
+      background-color: #0f111a;
+      border: 2px solid #00ff66;
+      border-radius: 8px;
+      box-shadow: 0 0 25px rgba(0, 255, 102, 0.25);
+      width: 100%;
+      max-width: 750px;
+      padding: 28px;
+    }
+    .header {
+      border-bottom: 1px solid #00ff66;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 1.5rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-align: center;
+      color: #00ff66;
+    }
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: #ffb700;
+      background: #161926;
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: 1px dashed #ffb700;
+    }
+    .story-text {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      margin-bottom: 25px;
+      min-height: 120px;
+      color: #e0ffe8;
+      white-space: pre-line;
+    }
+    .options-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .btn {
+      background-color: #171a29;
+      color: #00ff66;
+      border: 1px solid #00ff66;
+      padding: 12px 18px;
+      font-family: inherit;
+      font-size: 0.98rem;
+      text-align: left;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      background-color: #00ff66;
+      color: #07080c;
+      box-shadow: 0 0 12px #00ff66;
+      font-weight: bold;
+    }
+    .btn-disabled {
+      border-color: #444;
+      color: #666;
+      cursor: not-allowed;
+      background-color: #111;
+    }
+    .btn-disabled:hover {
+      background-color: #111;
+      color: #666;
+      box-shadow: none;
+    }
+    .end-screen {
+      background: #151824;
+      border: 1px solid #ffb700;
+      padding: 20px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+    .end-screen h2 {
+      color: #ffb700;
+      margin-bottom: 12px;
+      font-size: 1.3rem;
+    }
+    .end-screen p {
+      margin-bottom: 8px;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="game-container">
+    <div class="header">
+      <h1 id="title-header">Fuga da Zona Cyber</h1>
+      <div class="status-bar">
+        <span id="inventory">Mochila: Vazia</span>
+        <span id="capitulo">Capítulo: 1/4</span>
+      </div>
+    </div>
+    
+    <div id="story" class="story-text"></div>
+    <div id="options" class="options-container"></div>
+  </div>
+
+  <script>
+    const storyElement = document.getElementById('story');
+    const optionsElement = document.getElementById('options');
+    const inventoryElement = document.getElementById('inventory');
+    const capituloElement = document.getElementById('capitulo');
+
+    // Estado Global do Jogador
+    let state = {
+      inventory: [],
+      conhece_codigo: false,
+      capitulo: 1,
+      decisões_tomadas: 0,
+      aliados: 0
+    };
+
+    function updateHUD() {
+      inventoryElement.innerText = state.inventory.length === 0 
+        ? "Mochila: Vazia" 
+        : "Mochila: " + state.inventory.join(', ');
+      capituloElement.innerText = `Capítulo: ${state.capitulo}/4`;
+    }
+
+    function addInventoryItem(item) {
+      if (!state.inventory.includes(item)) {
+        state.inventory.push(item);
+        updateHUD();
+      }
+    }
+
+    const scenes = {
+      // ================= CAPÍTULO 1: O LABORATÓRIO =================
+      start: {
+        text: "CAPÍTULO 1: O DESPERTAR\n\nVocê acorda em uma maca de inox no Setor C-3 de um laboratório secreto. Há fios desconectados no seu pulso e um alarme silencioso piscando.\nNa sala há uma mesa com computador, um duto de ventilação no alto e o corpo de um guarda no chão.",
+        options: [
+          { text: "🔍 Revistar o guarda", nextScene: "revistar_guarda" },
+          { text: "💻 Acessar o computador", nextScene: "computador" },
+          { text: "🛠️ Forçar o duto de ventilação", nextScene: "duto" }
+        ]
+      },
+
+      revistar_guarda: {
+        text: "Você encontra um Pé de Cabra e um crachá de segurança danificado.",
+        onEnter: () => addInventoryItem("Pé de Cabra"),
+        options: [
+          { text: "💻 Ir para o computador", nextScene: "computador" },
+          { text: "🚪 Seguir para a porta blindada", nextScene: "porta_setor" }
+        ]
+      },
+
+      computador: {
+        text: "Nos arquivos, você lê sobre a 'Operação Fantasma' e descobre a senha do cofre de dados (4096).",
+        onEnter: () => { state.conhece_codigo = true; },
+        options: [
+          { text: "🔍 Revistar o guarda", nextScene: "revistar_guarda" },
+          { text: "🚪 Seguir para a porta blindada", nextScene: "porta_setor" }
+        ]
+      },
+
+      duto: {
+        text: "A grade tá presa por parafusos duros. Impossível tirar só com as mãos.",
+        options: [
+          { text: "🔨 Usar o Pé de Cabra na grade", nextScene: "duto_sucesso", requiredItem: "Pé de Cabra" },
+          { text: "↩️ Voltar para a sala", nextScene: "start" }
+        ]
+      },
+
+      duto_sucesso: {
+        text: "Você arranca a grade e rasteja direto para os dutos de esgoto da cidade, pulando o restante do complexo!",
+        options: [
+          { text: "🚀 Avançar para o Capítulo 2", nextScene: "cap2_inicio" }
+        ]
+      },
+
+      porta_setor: {
+        text: "A porta de aço do setor exige força para arrombar.",
+        options: [
+          { text: "🔨 Usar Pé de Cabra na porta", nextScene: "corredor_central", requiredItem: "Pé de Cabra" },
+          { text: "↩️ Voltar", nextScene: "start" }
+        ]
+      },
+
+      corredor_central: {
+        text: "Corredor Central. À esquerda fica o Laboratório Principal e à direita a Sala dos Servidores.",
+        options: [
+          { text: "🔬 Entrar no Laboratório Principal", nextScene: "laboratorio" },
+          { text: "🖥️ Ir para a Sala dos Servidores", nextScene: "servidores" },
+          { text: "🛗 Usar o Elevador de Emergência", nextScene: "elevador" }
+        ]
+      },
+
+      laboratorio: {
+        text: "Você acha um Cofre Eletrônico e um Cartão VIP no chão.",
+        onEnter: () => addInventoryItem("Cartão VIP"),
+        options: [
+          { text: "🔓 Digitar a Senha (4096)", nextScene: "cofre_aberto", requiredCondition: () => state.conhece_codigo },
+          { text: "↩️ Voltar ao corredor", nextScene: "corredor_central" }
+        ]
+      },
+
+      cofre_aberto: {
+        text: "O cofre abre e você pega o Injetor de Bipass!",
+        onEnter: () => addInventoryItem("Injetor de Bipass"),
+        options: [
+          { text: "↩️ Voltar ao corredor", nextScene: "corredor_central" }
+        ]
+      },
+
+      servidores: {
+        text: "No terminal dos servidores está o Chip de Dados contendo toda a verdade sobre o experimento.",
+        options: [
+          { text: "💾 Pegar o Chip de Dados", nextScene: "pegar_chip" },
+          { text: "↩️ Voltar ao corredor", nextScene: "corredor_central" }
+        ]
+      },
+
+      pegar_chip: {
+        text: "Chip guardado com sucesso!",
+        onEnter: () => addInventoryItem("Chip de Dados"),
+        options: [
+          { text: "↩️ Voltar ao corredor", nextScene: "corredor_central" }
+        ]
+      },
+
+      elevador: {
+        text: "O elevador exige o Cartão VIP e o Injetor de Bipass para subir até a superfície.",
+        options: [
+          { text: "💳 Ativar Elevador", nextScene: "cap2_inicio", requiredItem: "Cartão VIP", requiredItem2: "Injetor de Bipass" },
+          { text: "↩️ Voltar ao corredor", nextScene: "corredor_central" }
+        ]
+      },
+
+      // ================= CAPÍTULO 2: NAS RUAS DE SP =================
+      cap2_inicio: {
+        text: "CAPÍTULO 2: CAÇADA NA ZONA LESTE\n\nVocê sai em um beco chuvoso. Drones da Aethel Corp patrulham os céus de SP.\nUm hacker ferido nos escombros te entrega um Deck Hacking antes de desacordar.",
+        onEnter: () => { 
+          state.capitulo = 2; 
+          addInventoryItem("Deck Hacking");
+          updateHUD(); 
+        },
+        options: [
+          { text: "🏍️ Hackear a moto no beco para fugir", nextScene: "fuga_moto", requiredItem: "Deck Hacking" },
+          { text: "🏃 Se esconder nos galpões do metrô abandonado", nextScene: "metro_abandonado" }
+        ]
+      },
+
+      fuga_moto: {
+        text: "Você liga a moto e acelera pela Radial Leste cortando o trânsito enquanto desvia dos disparos dos drones!",
+        options: [
+          { text: "⚡ Entrar no túnel do metrô para despistar", nextScene: "cap3_inicio" },
+          { text: "🏢 Subir pelo viaduto", nextScene: "emboscada" }
+        ]
+      },
+
+      metro_abandonado: {
+        text: "Nas catracas trancadas do metrô desativado, você precisa de um jeito rápido de passar.",
+        options: [
+          { text: "👾 Hackear sistema das catracas", nextScene: "cap3_inicio", requiredItem: "Deck Hacking" },
+          { text: "🔨 Arrombar o portão de ferro", nextScene: "cap3_inicio", requiredItem: "Pé de Cabra" }
+        ]
+      },
+
+      emboscada: {
+        text: "Blindados corporativos fecham o viaduto e te capturam. GAME OVER!",
+        options: [
+          { text: "🔄 Tentar novamente", nextScene: "start" }
+        ]
+      },
+
+      // ================= CAPÍTULO 3: O ESCONDERIJO REBELDE =================
+      cap3_inicio: {
+        text: "CAPÍTULO 3: O SUBMUNDO HACKER\n\nVocê chega à base secreta da resistência underground 'Os Fantasmas', no subsolo do centro histórico de SP.\nO líder deles, Vex, exige ver o que você trouxe para provar que você não é um espião.",
+        onEnter: () => { 
+          state.capitulo = 3; 
+          updateHUD(); 
+        },
+        options: [
+          { text: "📡 Entregar o Chip de Dados para análise", nextScene: "alianca_completa", requiredItem: "Chip de Dados" },
+          { text: "🔧 Oferecer ajuda técnica usando o Deck Hacking", nextScene: "alianca_tecnica", requiredItem: "Deck Hacking" },
+          { text: "💬 Tentar convencer apenas com palavras", nextScene: "sem_provas" }
+        ]
+      },
+
+      alianca_completa: {
+        text: "Vex examina o Chip e fica impressionado: 'Você tem a chave para derrubar a Aethel Corp!' Eles te armam com um Traje Stealth para a missão final.",
+        onEnter: () => { 
+          addInventoryItem("Traje Stealth"); 
+          state.aliados += 2; 
+        },
+        options: [
+          { text: "🚀 Avançar para a invasão final (Capítulo 4)", nextScene: "cap4_inicio" }
+        ]
+      },
+
+      alianca_tecnica: {
+        text: "Você ajuda a calibrar os servidores da resistência. Eles confiam em você e te dão um Anulador de Sinal.",
+        onEnter: () => { 
+          addInventoryItem("Anulador de Sinal"); 
+          state.aliados += 1; 
+        },
+        options: [
+          { text: "🚀 Avançar para a invasão final (Capítulo 4)", nextScene: "cap4_inicio" }
+        ]
+      },
+
+      sem_provas: {
+        text: "Sem itens valiosos ou provas, os rebeldes não confiam em você totalmente, mas deixam você se abrigar.",
+        options: [
+          { text: "🚀 Avançar para o Capítulo 4 sozinho", nextScene: "cap4_inicio" }
+        ]
+      },
+
+      // ================= CAPÍTULO 4: A TORRE AETHEL =================
+      cap4_inicio: {
+        text: "CAPÍTULO 4: O CONFRONTO FINAL\n\nÉ noite de tempestade. Você está no topo do prédio vizinho à Torre Aethel, no coração de São Paulo.\nO servidor central da corporação está no último andar, protegido por sensores de laser e guardas cibernéticos.",
+        onEnter: () => { 
+          state.capitulo = 4; 
+          updateHUD(); 
+        },
+        options: [
+          { text: "🥷 Passar invisível pelos lasers usando o Traje Stealth", nextScene: "final_infiltracao", requiredItem: "Traje Stealth" },
+          { text: "📡 Desativar as defesas com o Anulador de Sinal", nextScene: "final_hack", requiredItem: "Anulador de Sinal" },
+          { text: "💥 Entrar arrombando a porta do servidor na força bruta", nextScene: "final_bruto", requiredItem: "Pé de Cabra" },
+          { text: "🏃 Tentar invadir sem equipamentos", nextScene: "capturado_final" }
+        ]
+      },
+
+      capturado_final: {
+        text: "Os lasers acionam as metralhadoras do teto antes mesmo de você encostar na porta. GAME OVER!",
+        options: [
+          { text: "🔄 Tentar novamente", nextScene: "start" }
+        ]
+      },
+
+      // ================= FINAIS DO JOGO =================
+      final_infiltracao: {
+        text: "",
+        onEnter: () => showEndScreen("Mestre das Sombras", "Você se infiltrou sem disparar um único alarme. Copiou os arquivos do servidor, deletou seu registro de cobaia e desapareceu na noite sem deixar rastros.")
+      },
+
+      final_hack: {
+        text: "",
+        onEnter: () => showEndScreen("O Libertador Cyber", "Você usou o anulador de sinal para transmitir todos os segredos da Aethel Corp ao vivo para todas as TVs e celulares do Brasil. A corporação caiu na mesma noite!")
+      },
+
+      final_bruto: {
+        text: "",
+        onEnter: () => showEndScreen("Sobrevivente Urbano", "Você destruiu a porta do servidor e escapou no meio do caos e das explosões. Você não derrubou a corporação toda, mas garantiu sua liberdade para sempre.")
+      }
+    };
+
+    function showEndScreen(tituloFinal, descricao) {
+      storyElement.innerHTML = `
+        <div class="end-screen">
+          <h2>🏆 FIM DE JOGO: ${tituloFinal}</h2>
+          <p>${descricao}</p>
+          <hr style="border-color: #ffb700; margin: 12px 0;">
+          <p><strong>📊 RELATÓRIO DA SUA JORNADA:</strong></p>
+          <p>• Decisões tomadas: ${state.decisões_tomadas}</p>
+          <p>• Itens na mochila: ${state.inventory.length > 0 ? state.inventory.join(', ') : 'Nenhum'}</p>
+          <p>• Nível de Aliança Hacker: ${state.aliados > 0 ? 'Alta' : 'Baixa'}</p>
+        </div>
+      `;
+      optionsElement.innerHTML = '';
+
+      const btn = document.createElement('button');
+      btn.classList.add('btn');
+      btn.innerText = "🔄 Jogar Novamente (Experimentar outras rotas)";
+      btn.onclick = () => showScene('restart');
+      optionsElement.appendChild(btn);
+    }
+
+    function showScene(sceneKey) {
+      if (sceneKey === 'restart') {
+        state = { inventory: [], conhece_codigo: false, capitulo: 1, decisões_tomadas: 0, aliados: 0 };
+        updateHUD();
+        sceneKey = 'start';
+      }
+
+      state.decisões_tomadas++;
+      const scene = scenes[sceneKey];
+      
+      if (scene.onEnter) {
+        scene.onEnter();
+      }
+
+      if (scene.text !== "") {
+        storyElement.innerText = scene.text;
+        optionsElement.innerHTML = '';
+
+        if (scene.options) {
+          scene.options.forEach(option => {
+            const button = document.createElement('button');
+            button.classList.add('btn');
+
+            let hasRequiredItem = !option.requiredItem || state.inventory.includes(option.requiredItem);
+            let hasRequiredItem2 = !option.requiredItem2 || state.inventory.includes(option.requiredItem2);
+            let hasCondition = !option.requiredCondition || option.requiredCondition();
+
+            if (hasRequiredItem && hasRequiredItem2 && hasCondition) {
+              button.innerText = option.text;
+              button.onclick = () => showScene(option.nextScene);
+            } else {
+              button.innerText = option.text + " 🔒 (Bloqueado / Requer item)";
+              button.classList.add('btn-disabled');
+              button.disabled = true;
+            }
+
+            optionsElement.appendChild(button);
+          });
+        }
+      }
+    }
+
+    // Inicialização
+    showScene('start');
+  </script>
+</body>
+</html>
